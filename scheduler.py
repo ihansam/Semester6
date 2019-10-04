@@ -2,7 +2,7 @@
 
 # SKKU JKD
 # OS Intro HW#1
-# ver 1.1. implementing time arrival option. 19.10.03.
+# ver 1.2. implementing STCF. start. 19.10.04.
 
 # [time arrival option 설계]
 # job의 runtime을 받는 jlist처럼, job의 arrival time을 직접 받을 수 있는 alist 구현
@@ -30,13 +30,13 @@ parser.add_option("-l", "--jlist", default="", help="instead of random jobs, pro
                   action="store", type="string", dest="jlist")
 parser.add_option("-m", "--maxlen", default=10, help="max length of job",
                   action="store", type="int", dest="maxlen")
-parser.add_option("-p", "--policy", default="FIFO", help="sched policy to use: SJF, FIFO, STCF, RR",
+parser.add_option("-p", "--policy", default="FIFO", help="sched policy to use: FIFO, SJF, STCF, RR",
                   action="store", type="string", dest="policy")
 parser.add_option("-q", "--quantum", help="length of time slice for RR policy", default=1, 
                   action="store", type="int", dest="quantum")
 parser.add_option("-c", help="compute answers for me", action="store_true", default=False, dest="solve")
 # arrival time을 list로 입력할 수 있는 옵션 -a
-parser.add_option("-a", "--alist", default="", help="instead of random arrival time, provide a comma-separated list of arrival times",
+parser.add_option("-a", "--alist", default="", help="instead zero arrival time, provide arrival time assign option.",
                   action="store", type="string", dest="alist")
 
 (options, args) = parser.parse_args()
@@ -50,9 +50,10 @@ if options.jlist == '':
     print('ARG seed', options.seed)
 else:
     print('ARG jlist', options.jlist)
-# print alist ARG if not NULL
-if options.alist != '':
+
+if options.alist != '':                                                 # print alist ARG if not NULL
     print('ARG alist', options.alist)
+
 print('')
 
 print('Here is the job list, with the run time of each job: ')
@@ -79,7 +80,7 @@ else:                                                                   # <case 
     else:
         ATlist = options.alist.split(',')                               # alist != NULL -> given alist를 arr time으로 할당
         if len(RTlist)!=len(ATlist):                                    # alist와 jlist의 size가 다를 때 exception
-            print('ERROR: number of alist args must be same of jlist or NULL')
+            print('ERROR: number of alist args must be same of jlist')
             exit(1)
 
     print("test:", len(RTlist))
@@ -167,7 +168,7 @@ if options.solve == True:
                 jobcount -= 1
             thetime += ranfor
             lastran[jobnum] = thetime
-
+        
         print('\nFinal statistics:')
         turnaroundSum = 0.0
         waitSum       = 0.0
@@ -181,7 +182,62 @@ if options.solve == True:
         
         print('\n  Average -- Response: %3.2f  Turnaround %3.2f  Wait %3.2f\n' % (responseSum/count, turnaroundSum/count, waitSum/count))
 
-    if options.policy != 'FIFO' and options.policy != 'SJF' and options.policy != 'RR': 
+    # [STCF Algorighm 구현] =================================================================================
+    if options.policy == 'STCF':
+        # Execution Trace
+        print('Execution trace:')
+
+        count = len(joblist)
+
+        for i in range(0,count):        # job: [jobnum, runtime, arrival time, time left, response time, turnaround time, wait time]
+            j = joblist.pop(0)          # 각 job에 남은 시간 원소를 추가
+            j.extend([j[1],0,0,0])            
+            joblist.append(j)
+
+        Decision_Times = []             # job arrival time마다 어떤 job을 실행할 지 결정해야한다          
+        for j in joblist:
+            Decision_Times.append(j[2])
+        Decision_Times.sort()
+
+        thetime = Decision_Times[0]     # 현재 시간. 가장 작은 arrival time부터 시작한다
+        Memory = []                     # job이 도착해 wait하고 실행되는 공간
+        Disk = []                       # 끝난 job이 옮겨지는 공간
+        IDLE = True                     # CPU가 쉬고 있는 상태인지 나타내는 flag
+
+        print(joblist)#test
+
+        while len(Disk)!= count:        # job이 모두 끝날 때까지 반복
+            if thetime in Decision_Times:           # 현재 시간이 decision time이면 새로 도착한 job을 memory로 옮긴다
+                pass
+
+                                            # 기존 실행하던 job을 중단한다 (print)
+                                            # 어떤 job을 실행시킬지 판단한다
+                                        # elif, 기존 실행하던 job이 끝나면
+                                            # job이 끝났음을 표시한다 (print)
+                                            # job을 disk로 옮긴다
+                                            # 새로 실행할 job을 판단한다
+                                                # 새로 실행할 job이 없다면 cpu를 쉬게하고 기다린다
+                                        # 판단한 job을 1초동안 실행시킨다                                        
+
+            break
+
+
+
+
+        print(joblist)
+        print(Memory)
+        print(Decision_Times)
+
+
+
+
+
+        # print('  [ time %3d ] Run job %3d for %.2f secs' % (thetime, jobnum, ranfor))
+
+
+
+    # ========================================================================================================    
+    if options.policy != 'FIFO' and options.policy != 'SJF' and options.policy != 'STCF' and options.policy != 'RR': 
         print('Error: Policy', options.policy, 'is not available.')
         sys.exit(0)
 else:

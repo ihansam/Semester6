@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
 # SKKU JKD
-# OS Intro HW#1
-# ver 1.3. implementing STCF. brief logic design. 19.10.05.
+# OS Intro HW#1     #llist 음수 못들어오게 막아야함.
+# ver 2.1. implementing STCF. END, runtimeerror Bug fixed 19.10.05.
 
 # [time arrival option 설계]
 # job의 runtime을 받는 jlist처럼, job의 arrival time을 직접 받을 수 있는 alist 구현
@@ -78,16 +78,21 @@ else:                                                                   # <case 
         for filler in range(0,len(RTlist)):
             ATlist.append(0)
     else:
-        ATlist = options.alist.split(',')                               # alist != NULL -> given alist를 arr time으로 할당
+        templist = options.alist.split(',')                             # alist != NULL -> given alist를 arr time으로 할당
+        ATlist = list(map(int, templist))
         if len(RTlist)!=len(ATlist):                                    # alist와 jlist의 size가 다를 때 exception
             print('ERROR: number of alist args must be same of jlist')
             exit(1)
+        for at in ATlist:                                               # alist에 음수 시간이 들어왔을 때 exception
+            if at < 0:
+                print('ERROR: provide unsigned integer value to alist args')
+                exit(1)
 
     print("test:", len(RTlist))
     jobnum = 0
     for runtime in RTlist:
         arrtime = ATlist[jobnum]
-        joblist.append([jobnum, float(runtime), arrtime])               
+        joblist.append([jobnum, int(runtime), arrtime])               
         jobnum += 1
 
     for job in joblist:        
@@ -202,7 +207,7 @@ if options.solve == True:
         thetime = 0                     # 현재 시간.
         Memory = []                     # job이 도착해 wait하고 실행되는 공간
         Disk = []                       # 끝난 job이 옮겨지는 공간
-        CPUrun = False                  # CPU가 실행상태인지 나타내는 flag
+        CPUrun = False                  # shecedule된 job이 있어 CPU가 실행상태인지 나타내는 flag
         Excution_Time = 0               # CPU가 한 job을 실행시킨 시간
         count = 0                       # 완료된 job의 개수
 
@@ -212,7 +217,7 @@ if options.solve == True:
             if thetime in Decision_Times:       # [현재 시간이 decision time일 때]
                 if CPUrun:                          # 실행중이던 job이 있으면 종료한다
                     CPUrun = False
-                    print('  [ time %3d ] Run job %3d for %.2f secs' % (thetime-Excution_Time, Memory[0][0], Excution_Time))
+                    print('  [ time %3d ] Run job %d for %.2f secs' % (thetime-Excution_Time, Memory[0][0], Excution_Time))
                     Excution_Time = 0
                                  
                 for job in joblist:             # Desition time에 새로 arrival한 job들을 MEM으로 load한다
@@ -224,42 +229,36 @@ if options.solve == True:
 
             else:                               # [현재 시간이 decition time이 아닐 때]
                 if not CPUrun:                      # CPU가 쉬는 중일 때
-                    if Memory == []:                # memory가 비어있으면 찰때까지 기다린다.
+                    if Memory == []:                # memory가 비어있으면 찰때까지 쉰다.
                         thetime += 1
                     else:                           # memory에 할 job이 있으면 다음 job을 스케쥴링한다. (재정렬할 필요는 없다)
                         CPUrun = True
 
-            if CPUrun:                          # [CPU 동작(1초동안 job 실행)]
-                if Memory[0][4] == -1:              # 처음 실행된 job의 response time을 기록
-                    Memory[0][4] = thetime
+            if CPUrun:                          # [CPU 동작] 스케쥴링이 완료되면 CPU를 1초간 실행시킨다
+                if Memory[0][4] == -1:              # 처음 실행된 job은 response time을 기록한다
+                    Memory[0][4] = thetime - Memory[0][2]
 
                 thetime += 1
                 Excution_Time += 1
-                pass
+                Memory[0][3] -= 1                   # timeleft 1 감소
+                if len(Memory) > 1:                 # 실행중이 아닌 MEM의 job wait time을 1 증가
+                    for i in range(1,len(Memory)):      
+                        Memory[i][6] += 1
                 
                 if Memory[0][3] == 0:               # timeleft가 0일때, 즉 job이 끝나면 Disk로 옮긴다
                     CPUrun = False
                     print('  [ time %3d ] Run job %d for %.2f secs ( DONE at %.2f )' \
                         % (thetime-Excution_Time, Memory[0][0], Excution_Time, thetime))                    
                     Memory[0][5] = thetime - Memory[0][2]       # turnaround time 기록
+                    Disk.append(Memory[0])
                     count += 1
-                    pass
-                    
-
-
-
-            break                       # 설계가 끝나면 없앤다
-
-
-
+                    Memory.pop(0)
+                    Excution_Time = 0
 
         print('MEM: ', Memory)#test
+        print('Disk: ', Disk)#test
 
 
-
-
-
-        # print('  [ time %3d ] Run job %3d for %.2f secs' % (thetime, jobnum, ranfor))
 
 
 

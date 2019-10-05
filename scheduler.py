@@ -1,8 +1,7 @@
 #! /usr/bin/env python
-
-# SKKU JKD
-# OS Intro HW#1     #llist 음수 못들어오게 막아야함.
-# ver 2.1. implementing STCF. END, runtimeerror Bug fixed 19.10.05.
+# SKKU KD JIN, ihansam@skku.edu
+# OS Intro HW#1
+# ver 2.2. exception revised 19.10.05.
 
 # [time arrival option 설계]
 # job의 runtime을 받는 jlist처럼, job의 arrival time을 직접 받을 수 있는 alist 구현
@@ -13,9 +12,9 @@
 # 이때 MAX arrival time은 jobs * maxlen로 가정했다
 
 # <case 2 (given workLoad)>
-# alist가 null이면 arrival time은 모두 0이다
-# alist가 null이 아니면, alist의 각 값을 arrival time으로 설정한다
-# alist size가 jlist size와 다를 시, exception을 발생시킨다
+# -a option 미사용시 arrival time은 모두 0이다
+# -a option 사용시 alist의 각 값을 arrival time으로 설정한다
+# alist size가 jlist size와 다를 때, 각 list에 음수가 들어왔을 때 exception을 발생시킨다
 
 import sys
 from optparse import OptionParser
@@ -83,15 +82,16 @@ else:                                                                   # <case 
         if len(RTlist)!=len(ATlist):                                    # alist와 jlist의 size가 다를 때 exception
             print('ERROR: number of alist args must be same of jlist')
             exit(1)
-        for at in ATlist:                                               # alist에 음수 시간이 들어왔을 때 exception
-            if at < 0:
-                print('ERROR: provide unsigned integer value to alist args')
-                exit(1)
-
-    print("test:", len(RTlist))
+            
     jobnum = 0
     for runtime in RTlist:
         arrtime = ATlist[jobnum]
+        if arrtime < 0:                                                      # alist에 음수 시간이 들어왔을 때 exception
+            print('ERROR: provide unsigned integer value to alist args')
+            exit(1)
+        if int(runtime) < 0:                                                 # jlist에 음수 시간이 들어왔을 때 exception
+            print('ERROR: provide unsiged integer value to jlist args')
+            exit(1)
         joblist.append([jobnum, int(runtime), arrtime])               
         jobnum += 1
 
@@ -211,8 +211,6 @@ if options.solve == True:
         Excution_Time = 0               # CPU가 한 job을 실행시킨 시간
         count = 0                       # 완료된 job의 개수
 
-        print('init joblist: ', joblist)#test
-
         while count < jobs:                 # job이 모두 끝날 때까지 반복
             if thetime in Decision_Times:       # [현재 시간이 decision time일 때]
                 if CPUrun:                          # 실행중이던 job이 있으면 종료한다
@@ -255,8 +253,6 @@ if options.solve == True:
                     Memory.pop(0)
                     Excution_Time = 0
 
-        print('MEM: ', Memory)#test
-        print('Disk: ', Disk)#test
 
 
 

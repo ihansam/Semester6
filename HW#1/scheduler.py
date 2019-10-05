@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # SKKU KD JIN, ihansam@skku.edu
 # OS Intro HW#1
-# ver 2.2. exception revised 19.10.05.
+# ver 3.0 Statics Implemented 19.10.05.
 
 # [time arrival option 설계]
 # job의 runtime을 받는 jlist처럼, job의 arrival time을 직접 받을 수 있는 alist 구현
@@ -9,7 +9,7 @@
 # <case 1 (random workLoad)>
 # -a option 미사용시 arrival time은 모두 0이다
 # -a option 사용시 적어도 한 숫자를 입력해야 하며, 어떤 수를 입력하든 random arrival time이 설정된다
-# 이때 MAX arrival time은 jobs * maxlen로 가정했다
+# 이때 MAX arrival time은 job 개수 * 평균 job 길이로 가정했다
 
 # <case 2 (given workLoad)>
 # -a option 미사용시 arrival time은 모두 0이다
@@ -67,7 +67,7 @@ if options.jlist == '':                                                 # <case 
         if options.alist == '':                                         # alist == NULL -> arr time = 0
             arrtime = 0
         else:                                                           # alist != NULL -> random arr time
-            arrtime = int(options.maxlen*options.jobs*random.random())  
+            arrtime = int((options.maxlen)/2*(options.jobs)*random.random())  
         joblist.append([jobnum, runtime, arrtime])                      
         print('  Job', jobnum, '( length = ' + str(runtime) + ', arrival time = ' + str(arrtime) + ' )')
 else:                                                                   # <case 2> /Given workload/    
@@ -253,11 +253,16 @@ if options.solve == True:
                     Memory.pop(0)
                     Excution_Time = 0
 
-
-
-
-
-
+        # Performance
+        print('\nFinal statistics:')
+        works = len(Disk)
+        responseSum = turnaroundSum = waitSum = 0.0
+        for job in Disk:
+            print('  Job %3d -- Response: %3.2f  Turnaround %3.2f  Wait %3.2f' % (job[0], job[4], job[5], job[6]))
+            responseSum += job[4]
+            turnaroundSum += job[5]
+            waitSum += job[6]
+        print('\n  Average -- Response: %3.2f  Turnaround %3.2f  Wait %3.2f\n' % (responseSum/works, turnaroundSum/works, waitSum/works))
     # ========================================================================================================    
     if options.policy != 'FIFO' and options.policy != 'SJF' and options.policy != 'STCF' and options.policy != 'RR': 
         print('Error: Policy', options.policy, 'is not available.')

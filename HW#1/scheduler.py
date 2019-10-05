@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # SKKU KD JIN, ihansam@skku.edu
 # OS Intro HW#1
-# ver 3.0 Statics Implemented 19.10.05.
+# ver 3.1 revise for FIFO 19.10.05.
 
 # [time arrival option 설계]
 # job의 runtime을 받는 jlist처럼, job의 arrival time을 직접 받을 수 있는 alist 구현
@@ -106,14 +106,15 @@ if options.solve == True:
         options.policy = 'FIFO'
     
     if options.policy == 'FIFO':
-        thetime = 0
+        joblist = sorted(joblist, key=operator.itemgetter(2))   # sort by arrival time
+        thetime = joblist[0][2]                                 # start time: first job arrival
         print('Execution trace:')
         for job in joblist:
             print('  [ time %3d ] Run job %d for %.2f secs ( DONE at %.2f )' % (thetime, job[0], job[1], thetime + job[1]))
             thetime += job[1]
 
         print('\nFinal statistics:')
-        t     = 0.0
+        t     = joblist[0][2]           # start time: first job arrival
         count = 0
         turnaroundSum = 0.0
         waitSum       = 0.0
@@ -122,9 +123,9 @@ if options.solve == True:
             jobnum  = tmp[0]
             runtime = tmp[1]
             
-            response   = t
-            turnaround = t + runtime
-            wait       = t
+            response   = t - tmp[2]     # response time = firstruntime - arrival time
+            turnaround = t + runtime - tmp[2]   # turnaroud time = end time - arrival time = (firstrun+runtime)-arrtime
+            wait       = t - tmp[2]     # wait time = response time (cuz nonpreemtive)
             print('  Job %3d -- Response: %3.2f  Turnaround %3.2f  Wait %3.2f' % (jobnum, response, turnaround, wait))
             responseSum   += response
             turnaroundSum += turnaround

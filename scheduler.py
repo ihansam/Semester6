@@ -2,7 +2,7 @@
 
 # SKKU JKD
 # OS Intro HW#1
-# ver 1.2. implementing STCF. start. 19.10.04.
+# ver 1.3. implementing STCF. brief logic design. 19.10.05.
 
 # [time arrival option 설계]
 # job의 runtime을 받는 jlist처럼, job의 arrival time을 직접 받을 수 있는 alist 구현
@@ -187,11 +187,11 @@ if options.solve == True:
         # Execution Trace
         print('Execution trace:')
 
-        count = len(joblist)
+        jobs = len(joblist)             # 처음 job 개수
 
-        for i in range(0,count):        # job: [jobnum, runtime, arrival time, time left, response time, turnaround time, wait time]
-            j = joblist.pop(0)          # 각 job에 남은 시간 원소를 추가
-            j.extend([j[1],0,0,0])            
+        for i in range(0,jobs):         # job: [jobnum, runtime, arrival time, time left, response time, turnaround time, wait time]
+            j = joblist.pop(0)          # 각 job에 남은 시간, 각 performance 원소를 추가
+            j.extend([j[1],-1,0,0])            
             joblist.append(j)
 
         Decision_Times = []             # job arrival time마다 어떤 job을 실행할 지 결정해야한다          
@@ -199,34 +199,61 @@ if options.solve == True:
             Decision_Times.append(j[2])
         Decision_Times.sort()
 
-        thetime = Decision_Times[0]     # 현재 시간. 가장 작은 arrival time부터 시작한다
+        thetime = 0                     # 현재 시간.
         Memory = []                     # job이 도착해 wait하고 실행되는 공간
         Disk = []                       # 끝난 job이 옮겨지는 공간
-        IDLE = True                     # CPU가 쉬고 있는 상태인지 나타내는 flag
+        CPUrun = False                  # CPU가 실행상태인지 나타내는 flag
+        Excution_Time = 0               # CPU가 한 job을 실행시킨 시간
+        count = 0                       # 완료된 job의 개수
 
-        print(joblist)#test
+        print('init joblist: ', joblist)#test
 
-        while len(Disk)!= count:        # job이 모두 끝날 때까지 반복
-            if thetime in Decision_Times:           # 현재 시간이 decision time이면 새로 도착한 job을 memory로 옮긴다
+        while count < jobs:                 # job이 모두 끝날 때까지 반복
+            if thetime in Decision_Times:       # [현재 시간이 decision time일 때]
+                if CPUrun:                          # 실행중이던 job이 있으면 종료한다
+                    CPUrun = False
+                    print('  [ time %3d ] Run job %3d for %.2f secs' % (thetime-Excution_Time, Memory[0][0], Excution_Time))
+                    Excution_Time = 0
+                                 
+                for job in joblist:             # Desition time에 새로 arrival한 job들을 MEM으로 load한다
+                    if job[2] == thetime:
+                        Memory.append(job)
+
+                Memory = sorted(Memory, key=operator.itemgetter(3))    # 스케쥴할 job을 정하기 위해 timeleft순으로 정렬한다 
+                CPUrun = True
+
+            else:                               # [현재 시간이 decition time이 아닐 때]
+                if not CPUrun:                      # CPU가 쉬는 중일 때
+                    if Memory == []:                # memory가 비어있으면 찰때까지 기다린다.
+                        thetime += 1
+                    else:                           # memory에 할 job이 있으면 다음 job을 스케쥴링한다. (재정렬할 필요는 없다)
+                        CPUrun = True
+
+            if CPUrun:                          # [CPU 동작(1초동안 job 실행)]
+                if Memory[0][4] == -1:              # 처음 실행된 job의 response time을 기록
+                    Memory[0][4] = thetime
+
+                thetime += 1
+                Excution_Time += 1
                 pass
-
-                                            # 기존 실행하던 job을 중단한다 (print)
-                                            # 어떤 job을 실행시킬지 판단한다
-                                        # elif, 기존 실행하던 job이 끝나면
-                                            # job이 끝났음을 표시한다 (print)
-                                            # job을 disk로 옮긴다
-                                            # 새로 실행할 job을 판단한다
-                                                # 새로 실행할 job이 없다면 cpu를 쉬게하고 기다린다
-                                        # 판단한 job을 1초동안 실행시킨다                                        
-
-            break
+                
+                if Memory[0][3] == 0:               # timeleft가 0일때, 즉 job이 끝나면 Disk로 옮긴다
+                    CPUrun = False
+                    print('  [ time %3d ] Run job %d for %.2f secs ( DONE at %.2f )' \
+                        % (thetime-Excution_Time, Memory[0][0], Excution_Time, thetime))                    
+                    Memory[0][5] = thetime - Memory[0][2]       # turnaround time 기록
+                    count += 1
+                    pass
+                    
 
 
 
+            break                       # 설계가 끝나면 없앤다
 
-        print(joblist)
-        print(Memory)
-        print(Decision_Times)
+
+
+
+        print('MEM: ', Memory)#test
 
 
 

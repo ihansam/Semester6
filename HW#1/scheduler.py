@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # SKKU KD JIN, ihansam@skku.edu
 # OS Intro HW#1
-# ver 3.1 revise for FIFO 19.10.05.
+# ver 3.2 FIFO bug fix, SJF start 19.10.06.
 
 # [time arrival option 설계]
 # job의 runtime을 받는 jlist처럼, job의 arrival time을 직접 받을 수 있는 alist 구현
@@ -101,15 +101,23 @@ print('\n')
 
 if options.solve == True:
     print('** Solutions **\n')
-    if options.policy == 'SJF':
-        joblist = sorted(joblist, key=operator.itemgetter(1))
-        options.policy = 'FIFO'
     
-    if options.policy == 'FIFO':
-        joblist = sorted(joblist, key=operator.itemgetter(2))   # sort by arrival time
+    if options.policy == 'FIFO' or 'SJF':
+        if options.policy == 'FIFO':
+            joblist = sorted(joblist, key=operator.itemgetter(2))   # FIFO는 arrival time 순으로 정렬하고 차례로 실행하면 된다
+        elif options.policy == 'SJF':
+            jobs = len(joblist)
+            sortDone = 0
+            joblist = sorted(joblist, key=operator.itemgetter(2,1)) # 먼저 arrival time, runtime 순으로 정렬한다
+            
+            while sortDone < jobs:                              # SJF는 아직 완벽하게 실행 순서대로 정렬하지 못했음
+                break
+
         thetime = joblist[0][2]                                 # start time: first job arrival
         print('Execution trace:')
         for job in joblist:
+            if thetime < job[2]:                                # 현재시간이 실행할 arrival time보다 작으면
+                thetime = job[2]                                # arrival time까지 기다렸다 실행
             print('  [ time %3d ] Run job %d for %.2f secs ( DONE at %.2f )' % (thetime, job[0], job[1], thetime + job[1]))
             thetime += job[1]
 
@@ -120,9 +128,10 @@ if options.solve == True:
         waitSum       = 0.0
         responseSum   = 0.0
         for tmp in joblist:
+            if t < tmp[2]:              # 현재 시간이 arrival time보다 작으면 arrival time까지 기다렸다 실행
+                t = tmp[2]
             jobnum  = tmp[0]
-            runtime = tmp[1]
-            
+            runtime = tmp[1]            
             response   = t - tmp[2]     # response time = firstruntime - arrival time
             turnaround = t + runtime - tmp[2]   # turnaroud time = end time - arrival time = (firstrun+runtime)-arrtime
             wait       = t - tmp[2]     # wait time = response time (cuz nonpreemtive)

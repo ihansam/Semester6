@@ -1,7 +1,7 @@
 #! /usr/bin/env python
-# SKKU KD JIN, ihansam@skku.edu
+# SKKU EEE KD JIN. ihansam@skku.edu
 # OS Intro HW#1
-# ver 3.2 FIFO bug fix, SJF start 19.10.06.
+# ver 3.3 SJF DONE 19.10.06.
 
 # [time arrival option 설계]
 # job의 runtime을 받는 jlist처럼, job의 arrival time을 직접 받을 수 있는 alist 구현
@@ -103,15 +103,30 @@ if options.solve == True:
     print('** Solutions **\n')
     
     if options.policy == 'FIFO' or 'SJF':
-        if options.policy == 'FIFO':
-            joblist = sorted(joblist, key=operator.itemgetter(2))   # FIFO는 arrival time 순으로 정렬하고 차례로 실행하면 된다
-        elif options.policy == 'SJF':
-            jobs = len(joblist)
-            sortDone = 0
-            joblist = sorted(joblist, key=operator.itemgetter(2,1)) # 먼저 arrival time, runtime 순으로 정렬한다
-            
-            while sortDone < jobs:                              # SJF는 아직 완벽하게 실행 순서대로 정렬하지 못했음
-                break
+        joblist = sorted(joblist, key=operator.itemgetter(2))   # FIFO는 arrival time 순으로 정렬하고 차례로 실행하면 된다
+        if options.policy == 'SJF':                             # SJF일 때 추가 정렬 과정이 필요하다
+            jobs = len(joblist)                         
+            sortDone = 0                
+            loadDone = 0
+            MEM = []                    # 실행 대기중인 (도착 시간이 현재 시간 이전인)job들의 공간.
+            DISK = joblist              # DISK는 sorting (실행)전의 공간 
+            joblist = []                # joblist는 sorting (실행)후의 공간
+            thetime = DISK[0][2]                 # 현재시간
+            while sortDone < jobs:          # 모든 job을 실행할 때까지 반복
+                if MEM == [] and thetime <= DISK[loadDone][2]:       # 메모리가 실행할 일이 없고 현재 시간이 load되지 않은 첫 job의
+                    thetime = DISK[loadDone][2]                      # arrival time보다 작으면 그때까지 기다린다
+                for i in range(loadDone,jobs):      # 이미 load된 job을 제외하고, arrival time이 현재 시간보다 작은 job을 MEM에 load한다
+                    if DISK[i][2] <= thetime:
+                        MEM.append(DISK[i])
+                        loadDone += 1
+                    else:                           
+                        break 
+                
+                MEM.sort(key=operator.itemgetter(1))    # MEM에 load된 job을 runtime순으로 정렬한다    
+                joblist.append(MEM[0])                  # 1개의 job만 그 job의 runtime만큼 계속 실행한다 (nonpreemptive)
+                thetime += MEM[0][1]                    # 실행된 job은 joblist로 옮겨진다. (그 결과, joblist는 SJF 알고리즘에 맞게 정렬된다)
+                MEM.pop(0)                              # 이제 이 정렬된 joblist를 그저 순서대로 실행하면 된다.
+                sortDone += 1
 
         thetime = joblist[0][2]                                 # start time: first job arrival
         print('Execution trace:')

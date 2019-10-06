@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # SKKU EEE KD JIN. ihansam@skku.edu
 # OS Intro HW#1
-# ver 3.4 Minor Bug fixed 19.10.06.
+# ver 4.0 RR Done 19.10.06.
 
 # [time arrival option 설계]
 # job의 runtime을 받는 jlist처럼, job의 arrival time을 직접 받을 수 있는 alist 구현
@@ -168,35 +168,47 @@ if options.solve == True:
         quantum  = float(options.quantum)
         jobcount = len(joblist)
         for i in range(0,jobcount):
-            lastran[i] = 0.0
+            lastran[i] = joblist[i][2]  #lastran의 초기값은 그 job의 arrval time
             wait[i] = 0.0
             turnaround[i] = 0.0
             response[i] = -1
 
-        runlist = []
-        for e in joblist:
-            runlist.append(e)
-
+        joblist.sort(key=operator.itemgetter(2))   # sort by arrival time
+        runlist = []            # memory
+        endruncount = 0         # 위 알고리즘들과 달리 원래의 코드처럼 DISK list는 사용하지 않고 설계
+        endloadcount = 0        # runlist에 load한 job의 index
         thetime  = 0.0
-        while jobcount > 0:
+
+        while endruncount < jobcount:
+            if runlist == [] and thetime < joblist[endloadcount][2]:    # memory가 비어있고 현재 시간<다음 job의 arrival time이면  
+                thetime = joblist[endloadcount][2]                      # 그 시간까지 기다림
+            
+            for i in range(endloadcount,jobcount):                      # arrival 시간이 된 job을 runlist에 복사 
+                if joblist[i][2] <= thetime:
+                    runlist.append(joblist[i])
+                    endloadcount += 1
+                else:                                                   # 이미 joblist가 arrtime으로 정렬되어있으므로
+                    break                                               # 아직 arrival하지 않은 job 이후 job들은 판단할 필요 없음 
+            
             # print '%d jobs remaining' % jobcount
             job = runlist.pop(0)
             jobnum  = job[0]
             runtime = float(job[1])
+            arvtime = job[2]                            # arrival time
             if response[jobnum] == -1:
-                response[jobnum] = thetime
+                response[jobnum] = thetime - arvtime    # response time은 첫 run시간 - 도착시간
             currwait = thetime - lastran[jobnum]
             wait[jobnum] += currwait
             if runtime > quantum:
                 runtime -= quantum
                 ranfor = quantum
                 print('  [ time %3d ] Run job %3d for %.2f secs' % (thetime, jobnum, ranfor))
-                runlist.append([jobnum, runtime])
+                runlist.append([jobnum, runtime, arvtime])      # add updated runtime and arrival time
             else:
                 ranfor = runtime
                 print('  [ time %3d ] Run job %3d for %.2f secs ( DONE at %.2f )' % (thetime, jobnum, ranfor, thetime + ranfor))
-                turnaround[jobnum] = thetime + ranfor
-                jobcount -= 1
+                turnaround[jobnum] = thetime + ranfor - arvtime # turnaround time = 끝난시간 - 도착시간
+                endruncount += 1            # 1개의 job 실행 종료
             thetime += ranfor
             lastran[jobnum] = thetime
         

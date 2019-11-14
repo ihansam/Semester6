@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+# SKKU EEE KD JIN. ihansam@skku.edu
+# OS Intro HW#3
+# ver 1.0 read original code 19.11.14.
 
 import sys
 from optparse import OptionParser
@@ -35,13 +38,13 @@ def vfunc(victim):
 
 #
 # main program
-#
+#                           # clockbits의 default값을 1로 수정함
 parser = OptionParser()
 parser.add_option('-a', '--addresses', default='-1',   help='a set of comma-separated pages to access; -1 means randomly generate',  action='store', type='string', dest='addresses')
 parser.add_option('-f', '--addressfile', default='',   help='a file with a bunch of addresses in it',                                action='store', type='string', dest='addressfile')
 parser.add_option('-n', '--numaddrs', default='10',    help='if -a (--addresses) is -1, this is the number of addrs to generate',    action='store', type='string', dest='numaddrs')
 parser.add_option('-p', '--policy', default='FIFO',    help='replacement policy: FIFO, LRU, OPT, UNOPT, RAND, CLOCK',                action='store', type='string', dest='policy')
-parser.add_option('-b', '--clockbits', default=2,      help='for CLOCK policy, how many clock bits to use',                          action='store', type='int', dest='clockbits')
+parser.add_option('-b', '--clockbits', default=1,      help='for CLOCK policy, how many clock bits to use',                          action='store', type='int', dest='clockbits')
 parser.add_option('-C', '--cachesize', default='3',    help='size of the page cache, in pages',                                      action='store', type='string', dest='cachesize')
 parser.add_option('-m', '--maxpage', default='10',     help='if randomly generating page accesses, this is the max page number',     action='store', type='string', dest='maxpage')
 parser.add_option('-s', '--seed', default='0',         help='random number seed',                                                    action='store', type='string', dest='seed')
@@ -130,6 +133,7 @@ else:
 
     # need to generate addresses
     addrIndex = 0
+    clkptr = 0                                                  # clock pointer for CLOCK policy
     for nStr in addrList:
         # first, lookup
         n = int(nStr)
@@ -162,8 +166,8 @@ else:
                         print('REF (b)', ref)
 
                     # hack: for now, do random
-                    # victim = memory.pop(int(random.random() * count))
-                    victim = -1
+                    # victim = memory.pop(int(random.random() * count))         # miss and full이므로 replace 필요
+                    victim = -1                                                 # swap out될 victim을 찾자
                     while victim == -1:
                         page = memory[int(random.random() * count)]
                         if cdebug:
@@ -175,7 +179,7 @@ else:
                             victim = page
                             memory.remove(page)
                             break
-
+                    
                     # remove old page's ref count
                     if page in memory:
                         assert('BROKEN')

@@ -37,4 +37,4 @@ for page in ref:
     else:                       # miss case         
         clkptr, victim = clockreplacement(clkptr, page)     # run replacement algorithm
         state = "miss"
-    print("Reference #", page, "(ref)", state, "(usebit)", use, "(memory)", mem, "swap out:", victim, "clock pointer:", clkptr)
+    print("Access: %d  %4s clock pointer->%d usebit: %9s memory: %9s Replaced: %s" %(page, state, clkptr, use, mem, victim))

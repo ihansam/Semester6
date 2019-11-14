@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # SKKU EEE KD JIN. ihansam@skku.edu
 # OS Intro HW#3
-# ver 1.0 read original code 19.11.14.
+# ver 2.0 clock policy implementation complete 19.11.15.
 
 import sys
 from optparse import OptionParser
@@ -137,7 +137,7 @@ else:
     for nStr in addrList:
         # first, lookup
         n = int(nStr)
-        try:
+        try:                                                                # check hit case
             idx = memory.index(n)
             hits = hits + 1
             if policy == 'LRU' or policy == 'MRU':
@@ -148,7 +148,7 @@ else:
             miss = miss + 1
 
         victim = -1        
-        if idx == -1:
+        if idx == -1:                                                       # miss case: cold miss, need replacement
             # miss, replace?
             # print 'BUG count, cachesize:', count, cachesize
             if count == cachesize:
@@ -165,20 +165,23 @@ else:
                         print('MEMORY ', memory)
                         print('REF (b)', ref)
 
-                    # hack: for now, do random
-                    # victim = memory.pop(int(random.random() * count))         # miss and full이므로 replace 필요
+                    # hack: for now, do random                              # 간단한 구현을 위해, memory swap in을 여기서 처리하였음
+                    # victim = memory.pop(int(random.random() * count))         # miss and full case이므로 replace 필요
                     victim = -1                                                 # swap out될 victim을 찾자
                     while victim == -1:
-                        page = memory[int(random.random() * count)]
+                        page = memory[clkptr]                                   # page: 포인터가 가리키는 페이지 번호
                         if cdebug:
                             print('  scan page:', page, ref[page])
-                        if ref[page] >= 1:
-                            ref[page] -= 1
+                        if ref[page] >= 1:                                      # page의 usebit이 0이 아니면
+                            ref[page] -= 1                                      # 1번의 기회를 더 줌 (usebit 차감)
                         else:
-                            # this is our victim
-                            victim = page
-                            memory.remove(page)
-                            break
+                            # this is our victim                                # page의 usebit이 0이면
+                            victim = page                                       # replace할 victim이 정해짐
+                            memory.remove(page)                                 # swap out
+                            memory.insert(clkptr, n)                            # swap in
+                                                                                # clock pointer update를 위해 break 제거
+                        clkptr = (lambda x: 0 if x == cachesize-1 else x+1)(clkptr)      # clock pointer update (0->1->2->0...)
+
                     
                     # remove old page's ref count
                     if page in memory:
@@ -235,21 +238,24 @@ else:
                             minReplace  = whenReferenced
                     victim = memory.pop(replaceIdx)
             else:
-                # miss, but no replacement needed (cache not full)
+                # miss, but no replacement needed (cache not full)      # cold miss case
                 victim = -1
                 count = count + 1
+                if policy == 'CLOCK':                                   # clock policy에서
+                    memory.append(n)                                    # cold miss에 대한 swap in
 
             # now add to memory
-            memory.append(n)
+            if not(policy == 'CLOCK'):                      # clock policy에서 swap in 과정은 이미 위에서 했으므로 생략
+                memory.append(n)
             if cdebug:
                 print('LEN (a)', len(memory))
             if victim != -1:
                 assert(victim not in memory)
 
         # after miss processing, update reference bit
-        if n not in ref:
+        if n not in ref:                                    # 새로 swap in된 page의 usebit를 1로 set
             ref[n] = 1
-        else:
+        else:                                               # 기존에 있던 page의 usebit를 1 증가 (최대 clockbits까지만)
             ref[n] += 1
             if ref[n] > clockbits:
                 ref[n] = clockbits
@@ -258,22 +264,13 @@ else:
             print('REF (a)', ref)
 
         if notrace == False:
-            print('Access: %d  %s %s -> %12s <- %s Replaced:%s [Hits:%d Misses:%d]' % (n, hfunc(idx), leftStr, memory, riteStr, vfunc(victim), hits, miss))
+            if policy == 'CLOCK':                           # clock policy에 대한 출력
+                print('Access: %d %s clock pointer-> %d MEMORY: %9s usebits: %18s Replaced:%s [Hits:%d Misses:%d]' \
+                    % (n, hfunc(idx), clkptr, memory, ref, vfunc(victim), hits, miss))
+            else:
+                print('Access: %d  %s %s -> %12s <- %s Replaced:%s [Hits:%d Misses:%d]' % (n, hfunc(idx), leftStr, memory, riteStr, vfunc(victim), hits, miss))
         addrIndex = addrIndex + 1
         
     print('')
     print('FINALSTATS hits %d   misses %d   hitrate %.2f' % (hits, miss, (100.0*float(hits))/(float(hits)+float(miss))))
     print('')
-
-
-
-    
-    
-    
-
-
-
-
-
-
-

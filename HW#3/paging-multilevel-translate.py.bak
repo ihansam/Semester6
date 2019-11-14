@@ -94,8 +94,8 @@ class OS:
         valid   = (pte & 0x80) >> 7
         pfn     = (pte & 0x7f)
         if printStuff == True:
-            print('    --> pte index:0x%x [decimal %d] pte contents:0x%x (valid %d, pfn 0x%02x [decimal %d])' % \
-                  (pteBits, pteBits, pte, valid, pfn, pfn))
+            print '    --> pte index:0x%x [decimal %d] pte contents:0x%x (valid %d, pfn 0x%02x [decimal %d])' % \
+                  (pteBits, pteBits, pte, valid, pfn, pfn)
         return (valid, pfn, pteAddr)
 
     def getPageDirEntry(self, pid, virtualAddr, printStuff):
@@ -106,8 +106,8 @@ class OS:
         valid   = (pde & 0x80) >> 7
         ptPtr   = (pde & 0x7f)
         if printStuff == True:
-            print('  --> pde index:0x%x [decimal %d] pde contents:0x%x (valid %d, pfn 0x%02x [decimal %d])' % \
-                  (pdeBits, pdeBits, pde, valid, ptPtr, ptPtr))
+            print '  --> pde index:0x%x [decimal %d] pde contents:0x%x (valid %d, pfn 0x%02x [decimal %d])' % \
+                  (pdeBits, pdeBits, pde, valid, ptPtr, ptPtr)
         return (valid, ptPtr, pdeAddr)
 
     def setPageTableEntry(self, pteAddr, physicalPage):
@@ -183,15 +183,15 @@ class OS:
     def dumpPage(self, whichPage):
         i = whichPage
         for j in range(0, self.pageSize):
-            print(self.memory[(i * self.pageSize) + j], end=' ')
-        print('')
+            print self.memory[(i * self.pageSize) + j],
+        print ''
 
     def memoryDump(self):
         for i in range(0, self.physMem / self.pageSize):
-            print('page %3d:' %  i, end=' ') 
+            print 'page %3d:' %  i, 
             for j in range(0, self.pageSize):
-                print('%02x' % self.memory[(i * self.pageSize) + j], end=' ')
-            print('')
+                print '%02x' % self.memory[(i * self.pageSize) + j],
+            print ''
 
     def getPDBR(self, pid):
         return self.pdbr[pid]
@@ -223,10 +223,10 @@ parser.add_option('-c', '--solve', help='compute answers for me', action='store_
 
 (options, args) = parser.parse_args()
 
-print('ARG seed', options.seed)
-print('ARG allocated',  options.allocated)
-print('ARG num',  options.num)
-print("")
+print 'ARG seed', options.seed
+print 'ARG allocated',  options.allocated
+print 'ARG num',  options.num
+print ""
 
 random.seed(options.seed)
 
@@ -236,7 +236,7 @@ used = os.procAlloc(1, options.allocated)
 
 os.memoryDump()
 
-print('\nPDBR:', os.getPDBR(1), ' (decimal) [This means the page directory is held in this page]\n')
+print '\nPDBR:', os.getPDBR(1), ' (decimal) [This means the page directory is held in this page]\n'
 
 for i in range(0, options.num):
     if (random.random() * 100) > 50.0 or i >= len(used):
@@ -244,18 +244,18 @@ for i in range(0, options.num):
     else:
         vaddr = (used[i] << 5) | int(random.random() * 32)
     if options.solve == True:
-        print('Virtual Address %04x:' % vaddr)
+        print 'Virtual Address %04x:' % vaddr
         r = os.translate(1, vaddr)
         if r > -1:
-            print('      --> Translates to Physical Address 0x%03x --> Value: %02x' % (r, os.getValue(r)))
+            print '      --> Translates to Physical Address 0x%03x --> Value: %02x' % (r, os.getValue(r))
         elif r == -1:
-            print('      --> Fault (page directory entry not valid)')
+            print '      --> Fault (page directory entry not valid)'
         else:
-            print('      --> Fault (page table entry not valid)')
+            print '      --> Fault (page table entry not valid)'
     else:
-        print('Virtual Address %04x: Translates To What Physical Address (And Fetches what Value)? Or Fault?' % vaddr)
+        print 'Virtual Address %04x: Translates To What Physical Address (And Fetches what Value)? Or Fault?' % vaddr
 
-print('')
+print ''
 
 exit(0)
 

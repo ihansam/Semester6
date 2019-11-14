@@ -50,16 +50,16 @@ parser.add_option('-c', '--compute', default=False,    help='compute answers for
 
 (options, args) = parser.parse_args()
 
-print('ARG addresses', options.addresses)
-print('ARG addressfile', options.addressfile)
-print('ARG numaddrs', options.numaddrs)
-print('ARG policy', options.policy)
-print('ARG clockbits', options.clockbits)
-print('ARG cachesize', options.cachesize)
-print('ARG maxpage', options.maxpage)
-print('ARG seed', options.seed)
-print('ARG notrace', options.notrace)
-print('')
+print 'ARG addresses', options.addresses
+print 'ARG addressfile', options.addressfile
+print 'ARG numaddrs', options.numaddrs
+print 'ARG policy', options.policy
+print 'ARG clockbits', options.clockbits
+print 'ARG cachesize', options.cachesize
+print 'ARG maxpage', options.maxpage
+print 'ARG seed', options.seed
+print 'ARG notrace', options.notrace
+print ''
 
 addresses   = str(options.addresses)
 addressFile = str(options.addressfile)
@@ -89,17 +89,17 @@ else:
         addrList = addresses.split(',')
 
 if options.solve == False:
-    print('Assuming a replacement policy of %s, and a cache of size %d pages,' % (policy, cachesize))
-    print('figure out whether each of the following page references hit or miss')
-    print('in the page cache.\n')
+    print 'Assuming a replacement policy of %s, and a cache of size %d pages,' % (policy, cachesize)
+    print 'figure out whether each of the following page references hit or miss'
+    print 'in the page cache.\n'
 
     for n in addrList:
-        print('Access: %d  Hit/Miss?  State of Memory?' % int(n))
-    print('')
+        print 'Access: %d  Hit/Miss?  State of Memory?' % int(n)
+    print ''
 
 else:
     if notrace == False:
-        print('Solving...\n')
+        print 'Solving...\n'
 
     # init memory structure
     count = 0
@@ -120,7 +120,7 @@ else:
         leftStr = 'Left '
         riteStr = 'Right'
     else:
-        print('Policy %s is not yet implemented' % policy)
+        print 'Policy %s is not yet implemented' % policy
         exit(1)
 
     # track reference bits for clock
@@ -157,9 +157,9 @@ else:
                     victim = memory.pop(int(random.random() * count))
                 elif policy == 'CLOCK':
                     if cdebug:
-                        print('REFERENCE TO PAGE', n)
-                        print('MEMORY ', memory)
-                        print('REF (b)', ref)
+                        print 'REFERENCE TO PAGE', n
+                        print 'MEMORY ', memory
+                        print 'REF (b)', ref
 
                     # hack: for now, do random
                     # victim = memory.pop(int(random.random() * count))
@@ -167,7 +167,7 @@ else:
                     while victim == -1:
                         page = memory[int(random.random() * count)]
                         if cdebug:
-                            print('  scan page:', page, ref[page])
+                            print '  scan page:', page, ref[page]
                         if ref[page] >= 1:
                             ref[page] -= 1
                         else:
@@ -181,10 +181,10 @@ else:
                         assert('BROKEN')
                     del ref[victim]
                     if cdebug:
-                        print('VICTIM', page)
-                        print('LEN', len(memory))
-                        print('MEM', memory)
-                        print('REF (a)', ref)
+                        print 'VICTIM', page
+                        print 'LEN', len(memory)
+                        print 'MEM', memory
+                        print 'REF (a)', ref
 
                 elif policy == 'OPT':
                     maxReplace  = -1
@@ -238,7 +238,7 @@ else:
             # now add to memory
             memory.append(n)
             if cdebug:
-                print('LEN (a)', len(memory))
+                print 'LEN (a)', len(memory)
             if victim != -1:
                 assert(victim not in memory)
 
@@ -251,15 +251,15 @@ else:
                 ref[n] = clockbits
         
         if cdebug:
-            print('REF (a)', ref)
+            print 'REF (a)', ref
 
         if notrace == False:
-            print('Access: %d  %s %s -> %12s <- %s Replaced:%s [Hits:%d Misses:%d]' % (n, hfunc(idx), leftStr, memory, riteStr, vfunc(victim), hits, miss))
+            print 'Access: %d  %s %s -> %12s <- %s Replaced:%s [Hits:%d Misses:%d]' % (n, hfunc(idx), leftStr, memory, riteStr, vfunc(victim), hits, miss)
         addrIndex = addrIndex + 1
         
-    print('')
-    print('FINALSTATS hits %d   misses %d   hitrate %.2f' % (hits, miss, (100.0*float(hits))/(float(hits)+float(miss))))
-    print('')
+    print ''
+    print 'FINALSTATS hits %d   misses %d   hitrate %.2f' % (hits, miss, (100.0*float(hits))/(float(hits)+float(miss)))
+    print ''
 
 
 

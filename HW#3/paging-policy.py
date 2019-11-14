@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # SKKU EEE KD JIN. ihansam@skku.edu
 # OS Intro HW#3
-# ver 2.0 clock policy implementation complete 19.11.15.
+# ver 2.1 develop print format 19.11.15.
 
 import sys
 from optparse import OptionParser
@@ -264,9 +264,10 @@ else:
             print('REF (a)', ref)
 
         if notrace == False:
-            if policy == 'CLOCK':                           # clock policy에 대한 출력
-                print('Access: %d %s clock pointer-> %d MEMORY: %9s usebits: %18s Replaced:%s [Hits:%d Misses:%d]' \
-                    % (n, hfunc(idx), clkptr, memory, ref, vfunc(victim), hits, miss))
+            if policy == 'CLOCK':                               # clock policy에 대한 출력
+                usebitlist = [ref[item] for item in memory]     # ref에 저장된 usebit를 memory 순서로 정렬해 쉽게 확인할 수 있도록 함 
+                print('Access: %d %s clock pointer-> %d MEMORY: %9s usebits: %9s Replaced:%s [Hits:%d Misses:%d]' \
+                    % (n, hfunc(idx), clkptr, memory, usebitlist, vfunc(victim), hits, miss))
             else:
                 print('Access: %d  %s %s -> %12s <- %s Replaced:%s [Hits:%d Misses:%d]' % (n, hfunc(idx), leftStr, memory, riteStr, vfunc(victim), hits, miss))
         addrIndex = addrIndex + 1
